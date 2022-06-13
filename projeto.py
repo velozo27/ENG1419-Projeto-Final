@@ -7,11 +7,14 @@ import time
 
 #====================== SETUP =========================#
 
-global is_recording, out
+global is_recording, out, camera_index, cap
 is_recording = False
+out = None
+camera_index = 0  # diz qual camera estamos vendo
+cap = cv2.VideoCapture(camera_index)
 
 # dimensoes da janela
-WIDTH = 800
+WIDTH = 850
 HEIGHT = 575
 
 # Create an instance of TKinter Window or frame
@@ -23,7 +26,6 @@ window.geometry(f"{WIDTH}x{HEIGHT}")
 # Create a Label to capture the Video frames
 video_label = tk.Label(window)
 video_label.pack()
-cap = cv2.VideoCapture(0)
 
 #========================================================#
 
@@ -45,6 +47,26 @@ def grava_video():
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('gravacao.avi', fourcc, 20.0, (640, 480))
     print(out)
+
+
+def mudar_camera():
+    global camera_index, cap
+
+    print('Mudando a camera...')
+
+    # PARA TESTES
+    ########################
+    if camera_index == 0:
+        camera_index = 1
+    else:
+        camera_index = 0
+    ########################
+
+    # mudando a camera
+    cap = cv2.VideoCapture(camera_index)
+
+    # mostrando a camera nova na tela
+    show_frames()
 
 
 def vira_para_esquerda():
@@ -75,7 +97,7 @@ botao_salva_video = tk.Button(
 botao_salva_video.place(x=450, y=ALUTRA_BOTOES)
 
 botao_fechar = tk.Button(window, text="FECHAR", command=quit, bg='red')
-botao_fechar.place(x=700, y=ALUTRA_BOTOES)
+botao_fechar.place(x=750, y=ALUTRA_BOTOES)
 
 botao_esquerda = tk.Button(
     window, text="VIRAR PARA A ESQUERDA", command=vira_para_esquerda)
@@ -89,11 +111,17 @@ botao_varredua = tk.Button(
     window, text="MODO VARREDUTA", command=modo_varredura)
 botao_varredua.place(x=210, y=ALUTRA_BOTOES)
 
+botao_mudar_camera = tk.Button(
+    window, text="MUDAR CAMERA", command=mudar_camera)
+botao_mudar_camera.place(x=600, y=ALUTRA_BOTOES)
+
 #========================================================#
+
+#======================= FUNCOES RELACIONADAS A CAMERA E VIDEO ===============================#
 
 
 def show_frames():
-    global out, is_recording
+    global out, is_recording, cap
 
     # funcao que mostra o video na tela
     # eh chamada dentro dela msm atualizando o frame mostrado
@@ -102,6 +130,7 @@ def show_frames():
     cv2image = cv2.cvtColor(cap.read()[1], cv2.COLOR_BGR2RGB)
     if is_recording:
         out.write(cv2)
+
     img = Image.fromarray(cv2image)
     # Convert image to PhotoImage
     imgtk = ImageTk.PhotoImage(image=img)
@@ -110,6 +139,17 @@ def show_frames():
 
     # Repeat after an interval to capture continiously
     video_label.after(20, show_frames)
+
+
+def get_amount_of_cameras():
+    '''Returns int value of available camera devices connected to the host device'''
+    camera = 0
+    while True:
+        if (cv2.VideoCapture(camera).grab()) is True:
+            camera = camera + 1
+        else:
+            cv2.destroyAllWindows()
+            return(int(camera))
 
 
 show_frames()
