@@ -88,7 +88,7 @@ class App:
             self.vid.out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             pass
         if ret:
-            img_rgb = cv2.cvtColor(src=img_rgb, code=cv2.COLOR_BGR2RGB)
+            #img_rgb = cv2.cvtColor(src=img_rgb, code=cv2.COLOR_BGR2RGB)
 
             prepared_frame = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
             prepared_frame = cv2.GaussianBlur(
@@ -119,11 +119,11 @@ class App:
                 (x, y, w, h) = cv2.boundingRect(contour)
                 if (w > 50 or h > 50):
                     # print(x, y, w, h)
-                    cv2.rectangle(img=prepared_frame, pt1=(x, y), pt2=(
+                    cv2.rectangle(img=img_rgb, pt1=(x, y), pt2=(
                         x + w, y + h), color=(0, 255, 0), thickness=2)
 
             self.photo = PIL.ImageTk.PhotoImage(
-                image=PIL.Image.fromarray(prepared_frame))
+                image=PIL.Image.fromarray(img_rgb))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
         self.window.after(self.delay, self.update)
 
