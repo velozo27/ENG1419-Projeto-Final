@@ -34,7 +34,7 @@ class App:
 
         # Button that lets the user take a snapshot
         self.btn_snapshot = tk.Button(
-            window, text="Snapshot", command=self.snapshot)
+            window, text="FOTO", command=self.snapshot)
         self.btn_snapshot.pack(side=tk.LEFT)
 
         # video control buttons
@@ -52,8 +52,35 @@ class App:
         self.btn_change_camera.pack(side=tk.LEFT)
 
         # quit button
-        self.btn_quit = tk.Button(window, text='QUIT', command=quit)
-        self.btn_quit.pack(side=tk.LEFT)
+        self.btn_quit = tk.Button(window, text='QUIT', command=quit, bg='red')
+        self.btn_quit.pack(side=tk.RIGHT)
+
+        # opcoes para cada camera
+        self.camera_atual = tk.Label(text=f'Camera atual: {0}')
+        self.camera_atual.pack(side=tk.TOP)
+
+        self.btn_go_right = tk.Button(
+            window, text='Ir para esquerda', command=vira_para_esquerda)
+        self.btn_go_right.pack(side=tk.TOP)
+
+        self.btn_go_left = tk.Button(
+            window, text='Ir para direita', command=vira_para_direita)
+        self.btn_go_left.pack(side=tk.TOP)
+
+
+        # checkboxes
+        varrdura_is_marked = tk.IntVar()
+        movimento_is_marked = tk.IntVar()
+        
+        self.box_varredura = tk.Checkbutton(
+            window, text='Varredura', variable=varrdura_is_marked, onvalue=1, offvalue=0, command=modo_varredura)
+        self.box_varredura.pack(side=tk.BOTTOM)
+
+        self.box_movimento = tk.Checkbutton(
+            window, text='Detecção de Movimento', variable=movimento_is_marked, onvalue=1, offvalue=0, command=modo_movimento)
+        self.box_movimento.pack(side=tk.BOTTOM)
+        
+        
 
         # After it is called once, the update method will be automatically called every delay milliseconds
         self.delay = 10
@@ -140,6 +167,31 @@ class App:
         # self.videoResolutionHelper.make_720p()
 
         # self.vid = VideoCapture(new_video_source)
+
+def vira_para_esquerda():
+    # TODO
+    print('Virando para a esquerda...')
+    texto = 'esquerda' + '\n'
+    # meu_serial.write(texto.encode('UTF-8'))
+
+
+def vira_para_direita():
+    # TODO
+    print('Virando para a direita...')
+    texto = 'direita' + '\n'
+    # meu_serial.write(texto.encode('UTF-8'))
+
+
+def modo_varredura():
+    # TODO
+    print('Começando modo varredura...')
+    texto = 'esquerda' + '\n'
+    # meu_serial.write(texto.encode('UTF-8'))
+
+def modo_movimento():
+    # TODO
+    print('Começando modo movimento')
+
 
 
 class VideoCapture:
