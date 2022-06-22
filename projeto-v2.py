@@ -22,6 +22,22 @@ class App:
         # open video source (by default this will try to open the computer webcam)
         self.vid = VideoCapture(self.video_source)
 
+        number_of_cameras = self.vid.get_amount_of_cameras()
+
+        # self.camera_options == ['camera #0', 'camera #1']
+        self.camera_options = [f'camera #{number}' for
+                               number in range(number_of_cameras)]
+
+        self.selected_camera = tk.StringVar(window)
+        self.selected_camera.set(self.camera_options[0])  # default value
+
+        # self.previous_selected_camera = tk.StringVar(window)
+        # self.previous_selected_camera.set(
+        #     self.camera_options[0])  # default value
+
+        print('self.selected_camera =', self.selected_camera)
+
+
         # videoResolutionHelper = VideoResolutionHelper(self.vid)
         # videoResolutionHelper.make_720p()
 
@@ -48,8 +64,12 @@ class App:
         self.btn_stop.pack(side=tk.LEFT)
 
         self.btn_change_camera = tk.Button(
-            window, text='CHANGE CAMERA', command=self.change_camera)
+            window, text='PRÓXIMA CAMERA', command=self.change_camera)
         self.btn_change_camera.pack(side=tk.LEFT)
+
+        self.option_menu = tk.OptionMenu(
+            window, self.selected_camera, *self.camera_options)
+        self.option_menu.pack(side=tk.LEFT)
 
         # quit button
         self.btn_quit = tk.Button(window, text='QUIT', command=quit, bg='red')
@@ -67,11 +87,10 @@ class App:
             window, text='Ir para direita', command=vira_para_direita)
         self.btn_go_left.pack(side=tk.TOP)
 
-
         # checkboxes
         varrdura_is_marked = tk.IntVar()
         movimento_is_marked = tk.IntVar()
-        
+
         self.box_varredura = tk.Checkbutton(
             window, text='Varredura', variable=varrdura_is_marked, onvalue=1, offvalue=0, command=modo_varredura)
         self.box_varredura.pack(side=tk.BOTTOM)
@@ -79,8 +98,6 @@ class App:
         self.box_movimento = tk.Checkbutton(
             window, text='Detecção de Movimento', variable=movimento_is_marked, onvalue=1, offvalue=0, command=modo_movimento)
         self.box_movimento.pack(side=tk.BOTTOM)
-        
-        
 
         # After it is called once, the update method will be automatically called every delay milliseconds
         self.delay = 10
@@ -107,6 +124,12 @@ class App:
         print("camera closed => Not Recording")
 
     def update(self):
+
+
+        # if camera was changed, update VideoCapture
+        # self.selected_camera.set(self.selected_camera.get())
+        # if (self.selected_camera != self.previous_selected_camera):
+        #     self.change_camera(self.selected_camera)
 
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
@@ -154,8 +177,8 @@ class App:
             self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
         self.window.after(self.delay, self.update)
 
-    def change_camera(self
-                      # , new_video_source
+    def change_camera(self,
+                    #   new_video_source
                       ):
         if self.video_source == 0:
             self.video_source = 1
@@ -167,6 +190,7 @@ class App:
         # self.videoResolutionHelper.make_720p()
 
         # self.vid = VideoCapture(new_video_source)
+
 
 def vira_para_esquerda():
     # TODO
@@ -188,10 +212,10 @@ def modo_varredura():
     texto = 'esquerda' + '\n'
     # meu_serial.write(texto.encode('UTF-8'))
 
+
 def modo_movimento():
     # TODO
     print('Começando modo movimento')
-
 
 
 class VideoCapture:
@@ -252,6 +276,16 @@ class VideoCapture:
 
     def change_capture(self, cap):
         self.vid = cap
+
+    def get_amount_of_cameras(self):
+        '''Returns int value of available camera devices connected to the host device'''
+        camera = 0
+        while True:
+            if (cv2.VideoCapture(camera).grab()) is True:
+                camera = camera + 1
+            else:
+                cv2.destroyAllWindows()
+                return(int(camera))
 
     # To get frames
 
