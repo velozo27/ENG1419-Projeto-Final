@@ -37,7 +37,6 @@ class App:
 
         print('self.selected_camera =', self.selected_camera)
 
-
         # videoResolutionHelper = VideoResolutionHelper(self.vid)
         # videoResolutionHelper.make_720p()
 
@@ -63,13 +62,17 @@ class App:
             window, text='STOP', command=self.close_camera)
         self.btn_stop.pack(side=tk.LEFT)
 
-        self.btn_change_camera = tk.Button(
-            window, text='PRÓXIMA CAMERA', command=self.change_camera)
-        self.btn_change_camera.pack(side=tk.LEFT)
+        self.btn_next_camera = tk.Button(
+            window, text='PRÓXIMA CAMERA', command=self.next_camera)
+        self.btn_next_camera.pack(side=tk.LEFT)
 
         self.option_menu = tk.OptionMenu(
             window, self.selected_camera, *self.camera_options)
         self.option_menu.pack(side=tk.LEFT)
+
+        self.btn_change_to_selected_camera = tk.Button(
+            window, text='IR PARA CAMERA SELECIONADA', command=self.change_to_selected_camera)
+        self.btn_change_to_selected_camera.pack(side=tk.LEFT)
 
         # quit button
         self.btn_quit = tk.Button(window, text='QUIT', command=quit, bg='red')
@@ -125,7 +128,6 @@ class App:
 
     def update(self):
 
-
         # if camera was changed, update VideoCapture
         # self.selected_camera.set(self.selected_camera.get())
         # if (self.selected_camera != self.previous_selected_camera):
@@ -177,9 +179,9 @@ class App:
             self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
         self.window.after(self.delay, self.update)
 
-    def change_camera(self,
+    def next_camera(self,
                     #   new_video_source
-                      ):
+                    ):
         if self.video_source == 0:
             self.video_source = 1
         else:
@@ -190,6 +192,10 @@ class App:
         # self.videoResolutionHelper.make_720p()
 
         # self.vid = VideoCapture(new_video_source)
+
+    def change_to_selected_camera(self):
+        index_camera_selecionada = int(self.selected_camera.get()[-1])
+        self.vid = VideoCapture(index_camera_selecionada)
 
 
 def vira_para_esquerda():
