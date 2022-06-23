@@ -13,7 +13,7 @@ class App:
     def __init__(self, window, window_title, video_source=0):
         self.window = window
         self.window.title(window_title)
-        self.video_source = video_source
+        self.video_source = video_source  # index da camera selecionada
         self.ok = False
 
         # timer
@@ -22,14 +22,15 @@ class App:
         # open video source (by default this will try to open the computer webcam)
         self.vid = VideoCapture(self.video_source)
 
-        number_of_cameras = self.vid.get_amount_of_cameras()
+        self.number_of_cameras = self.vid.get_amount_of_cameras()
 
         # self.camera_options == ['camera #0', 'camera #1']
         self.camera_options = [f'camera #{number}' for
-                               number in range(number_of_cameras)]
+                               number in range(self.number_of_cameras)]
 
         self.selected_camera = tk.StringVar(window)
         self.selected_camera.set(self.camera_options[0])  # default value
+        # self.index_camera_selecionada = 0
 
         # self.previous_selected_camera = tk.StringVar(window)
         # self.previous_selected_camera.set(
@@ -78,28 +79,42 @@ class App:
         self.btn_quit = tk.Button(window, text='QUIT', command=quit, bg='red')
         self.btn_quit.pack(side=tk.RIGHT)
 
+        self.btn_carregar_preferencias = tk.Button(
+            window, text="CARREGAR PREFERÊNCIAS", command=quit)
+        self.btn_carregar_preferencias.pack(side=tk.RIGHT)
+
+        self.btn_salvar_preferencias = tk.Button(
+            window, text="SALVAR PREFERÊNCIAS  ", command=self.salvar_preferencias)
+        self.btn_salvar_preferencias.pack(side=tk.RIGHT)
+
         # opcoes para cada camera
-        self.camera_atual = tk.Label(text=f'Camera atual: {0}')
+        self.camera_atual = tk.Label(text=f'Camera atual: {self.video_source}')
         self.camera_atual.pack(side=tk.TOP)
 
         self.btn_go_right = tk.Button(
-            window, text='Ir para esquerda', command=vira_para_esquerda)
+            window, text='Ir para esquerda', command=self.vira_para_esquerda)
         self.btn_go_right.pack(side=tk.TOP)
 
         self.btn_go_left = tk.Button(
-            window, text='Ir para direita', command=vira_para_direita)
+            window, text='Ir para direita', command=self.vira_para_direita)
         self.btn_go_left.pack(side=tk.TOP)
 
+        # saving camera preferences
+        self.camera_preferences = [
+            {'VARREDURA': 0, 'MOVIMENTO': 0}] * self.number_of_cameras
+        # fica assim:
+        # self.camera_preferences = [{'VARREDURA': False, 'MOVIMENTO': False}, {'VARREDURA': False, 'MOVIMENTO': False}] se tiver 2 cameras por exemplo
+
         # checkboxes
-        varrdura_is_marked = tk.IntVar()
-        movimento_is_marked = tk.IntVar()
+        self.varredura_is_marked = tk.IntVar()
+        self.movimento_is_marked = tk.IntVar()
 
         self.box_varredura = tk.Checkbutton(
-            window, text='Varredura', variable=varrdura_is_marked, onvalue=1, offvalue=0, command=modo_varredura)
+            window, text='Varredura', variable=self.varredura_is_marked, onvalue=1, offvalue=0, command=self.modo_varredura)
         self.box_varredura.pack(side=tk.BOTTOM)
 
         self.box_movimento = tk.Checkbutton(
-            window, text='Detecção de Movimento', variable=movimento_is_marked, onvalue=1, offvalue=0, command=modo_movimento)
+            window, text='Detecção de Movimento', variable=self.movimento_is_marked, onvalue=1, offvalue=0, command=self.modo_movimento)
         self.box_movimento.pack(side=tk.BOTTOM)
 
         # After it is called once, the update method will be automatically called every delay milliseconds
@@ -182,46 +197,88 @@ class App:
     def next_camera(self,
                     #   new_video_source
                     ):
-        if self.video_source == 0:
-            self.video_source = 1
+        if self.video_source + 1 == self.number_of_cameras:
+            self.video_source = 0 
         else:
-            self.video_source = 0
+            self.video_source += 1
 
         self.vid = VideoCapture(self.video_source)
+
+        self.reset_checkboxes()
+
+        # atualiza o label de qual camera esta na tela
+        self.camera_atual.config(text=f'Camera atual: {self.video_source}')
+
         # self.videoResolutionHelper.change_capture(self.video_source)
         # self.videoResolutionHelper.make_720p()
 
         # self.vid = VideoCapture(new_video_source)
 
     def change_to_selected_camera(self):
-        index_camera_selecionada = int(self.selected_camera.get()[-1])
-        self.vid = VideoCapture(index_camera_selecionada)
+        self.video_source = int(self.selected_camera.get()[-1])
+        self.vid = VideoCapture(self.video_source)
 
+        # atualiza o label de qual camera esta na tela
+        self.camera_atual.config(text=f'Camera atual: {self.video_source}')
+        
+        # TODO: carregar as preferencias da camera selecionada
 
-def vira_para_esquerda():
-    # TODO
-    print('Virando para a esquerda...')
-    texto = 'esquerda' + '\n'
-    # meu_serial.write(texto.encode('UTF-8'))
+    def salvar_preferencias(self):
+        print('Salvando as preferências...')
 
+        # por enquanto só estou salvando a posição atual da camera
 
-def vira_para_direita():
-    # TODO
-    print('Virando para a direita...')
-    texto = 'direita' + '\n'
-    # meu_serial.write(texto.encode('UTF-8'))
+        f = open("preferencias.txt", "w")
+        f.write(f'NUMERO DE CAMERAS: {self.number_of_cameras}\n\n')
 
+        for camera_index in range(self.number_of_cameras):
+            f.write(f'CAMERA NUMERO {camera_index}\n')
+            f.write(
+                f'VARREDURA: {self.camera_preferences[camera_index]["VARREDURA"]}\n')
+            f.write(
+                f'MOVIMENTO: {self.camera_preferences[camera_index]["MOVIMENTO"]}\n')
+            f.write('\n')
 
-def modo_varredura():
-    # TODO
-    print('Começando modo varredura...')
-    texto = 'esquerda' + '\n'
-    # meu_serial.write(texto.encode('UTF-8'))
+        f.close()
 
+    def vira_para_esquerda(self):
+        # TODO
+        print('Virando para a esquerda...')
+        texto = 'esquerda' + '\n'
+        # meu_serial.write(texto.encode('UTF-8'))
 
-def modo_movimento():
-    # TODO
-    print('Começando modo movimento')
+    def vira_para_direita(self):
+        # TODO
+        print('Virando para a direita...')
+        texto = 'direita' + '\n'
+        # meu_serial.write(texto.encode('UTF-8'))
+
+    def modo_varredura(self):
+        # TODO
+
+        # manda o comando para o arduino pela Serial
+        print('Começando modo varredura...')
+        texto = 'esquerda' + '\n'
+        # meu_serial.write(texto.encode('UTF-8'))
+
+        # salva na lista de prefrencias que foi marcado
+        self.atualiza_preferencias()
+
+    def modo_movimento(self):
+        # TODO
+        print('Começando modo movimento')
+
+        # salva na lista de prefrencias que foi marcado
+        self.atualiza_preferencias()
+
+    def atualiza_preferencias(self):
+        self.camera_preferences[self.video_source] = {
+            'VARREDURA': self.varredura_is_marked.get(), 'MOVIMENTO': self.movimento_is_marked.get()}
+        print(f'Preferências atualizada: {self.camera_preferences}')
+
+    def reset_checkboxes(self):
+        self.box_movimento.selection_clear()
+        self.box_varredura.selection_clear()
 
 
 class VideoCapture:
