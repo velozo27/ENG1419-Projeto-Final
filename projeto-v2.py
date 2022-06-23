@@ -1,3 +1,4 @@
+from sqlite3 import Timestamp
 import tkinter as tk
 import cv2
 import PIL.Image
@@ -7,6 +8,7 @@ import datetime as dt
 import argparse
 from VideoResolutionHelper import VideoResolutionHelper
 import numpy as np
+
 
 
 class App:
@@ -184,7 +186,7 @@ class App:
                     # too small: skip!
                     pass
                 (x, y, w, h) = cv2.boundingRect(contour)
-                if (w > 50 or h > 50):
+                if (w > 200 or h > 200):
                     # print(x, y, w, h)
                     cv2.rectangle(img=img_rgb, pt1=(x, y), pt2=(
                         x + w, y + h), color=(0, 255, 0), thickness=2)
@@ -192,6 +194,8 @@ class App:
             self.photo = PIL.ImageTk.PhotoImage(
                 image=PIL.Image.fromarray(img_rgb))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
+
+            self.previous_frame = prepared_frame
         self.window.after(self.delay, self.update)
 
     def next_camera(self,
@@ -287,6 +291,9 @@ class VideoCapture:
         self.vid = cv2.VideoCapture(video_source)
         if not self.vid.isOpened():
             raise ValueError("Unable to open video source", video_source)
+
+        print(f'w = {self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)}')
+        print(f'h = {self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)}')
 
         # Command Line Parser
         args = CommandLineParser().args
@@ -431,6 +438,8 @@ class CommandLineParser:
                             '480p'], type=str, help='Resolution of the video output: for now we have 480p, 720p, 1080p & 4k')
 
         # Only one values are going to accept for the tag --name. So nargs will be '1'
+        ts = dt.datetime.now()
+        ts.strftime("%d-%m-%Y-%H-%M-%S")
         parser.add_argument(
             '--name', nargs=1, default=['output'], type=str, help='Enter Output video title/name')
 
