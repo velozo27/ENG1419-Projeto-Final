@@ -1,5 +1,6 @@
 from flask import Flask, render_template, Response
 import cv2
+import threading
 
 app = Flask(__name__)
 
@@ -18,8 +19,7 @@ def gen_frames():
 
 @app.route('/video_feed')
 def video_feed():
-    data = gen_frames()
-    return Response(data, mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/Camera<int:x>')
 def camera(x):

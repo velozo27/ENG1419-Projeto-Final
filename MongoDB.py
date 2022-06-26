@@ -9,9 +9,9 @@ cliente = MongoClient("localhost", 27017)
 banco = cliente["Projeto_Final"]
 colecao = banco["PF"]
 
-def salvar_dados():
+def salvar_imagem():
     
-    im = Image.open("./image.jpg")
+    im = Image.open("./imagem.jpg")
     image_bytes = io.BytesIO()
     im.save(image_bytes, format='JPEG')
     
@@ -22,7 +22,7 @@ def salvar_dados():
     
     colecao.insert_one(dados)
     
-def obter_dados():
+def obter_imagem():
     #busca = {"chave1": valor1, "chave2": {"$gt": valor2}}
     #ordenacao = [ ["Data", DESCENDING] ]
     documento = colecao.find_one()
@@ -34,4 +34,4 @@ def obter_dados():
     fig.axes.get_yaxis().set_visible(False)
     plt.show()
     
-obter_dados()
+salvar_imagem()
