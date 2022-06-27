@@ -19,6 +19,12 @@ cliente = MongoClient("localhost", 27017)
 banco = cliente['PF']
 fs = gridfs.GridFS(banco)
 
+
+def chunks(xs, n):
+    n = max(1, n)
+    return (xs[i:i+n] for i in range(0, len(xs), n))
+
+
 class App:
     def __init__(self, window, window_title, video_source=0):
         self.window = window
@@ -90,7 +96,7 @@ class App:
         self.btn_quit.pack(side=tk.RIGHT)
 
         self.btn_carregar_preferencias = tk.Button(
-            window, text="CARREGAR PREFERÊNCIAS", command=quit)
+            window, text="CARREGAR PREFERÊNCIAS", command=self.carregar_preferencias)
         self.btn_carregar_preferencias.pack(side=tk.RIGHT)
 
         self.btn_salvar_preferencias = tk.Button(
@@ -111,7 +117,7 @@ class App:
 
         # saving camera preferences
         self.camera_preferences = [
-            {'VARREDURA': 0, 'MOVIMENTO': 0}] * self.number_of_cameras
+            {'VARREDURA': 0, 'MOVIMENTO': 0, 'POSICAO': 0}] * self.number_of_cameras
         # fica assim:
         # self.camera_preferences = [{'VARREDURA': False, 'MOVIMENTO': False}, {'VARREDURA': False, 'MOVIMENTO': False}] se tiver 2 cameras por exemplo
 
@@ -133,28 +139,28 @@ class App:
 
         self.window.mainloop()
 
-    #salva imagem no Banco de Dados
-    def salvar_imagem(image_path, file_name):
+    # salva imagem no Banco de Dados
+    def salvar_imagem(self, image_path, file_name):
         global saved
-        im = Image.open(image_path)
+        im = PIL.Image.open(image_path)
         image_bytes = io.BytesIO()
         im.save(image_bytes, format='JPEG')
-        
+
         a = fs.put(image_bytes.getvalue(), filename=file_name)
-        
-    #abre imagem do banco de dados
-    def abrir_imagem(filename):
+
+    # abre imagem do banco de dados
+    def abrir_imagem(self, filename):
         b = fs.put(fs.find_one({"filename": filename}))
         out = fs.get(b)
 
-        pil_img = Image.open(io.BytesIO(out.read()))
+        pil_img = PIL.Image.open(io.BytesIO(out.read()))
         fig = plt.imshow(pil_img)
         fig.set_cmap('hot')
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
         fs.delete(b)
-        
+
     def snapshot(self):
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
@@ -162,8 +168,7 @@ class App:
         if ret:
             image_file = "frame-"+time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg"
             cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-            salvar_imagem("./"+image_file, image_file)
-            
+            self.salvar_imagem("./"+image_file, image_file)
 
     def open_camera(self):
         self.ok = True
@@ -234,7 +239,7 @@ class App:
                     #   new_video_source
                     ):
         if self.video_source + 1 == self.number_of_cameras:
-            self.video_source = 0 
+            self.video_source = 0
         else:
             self.video_source += 1
 
@@ -256,7 +261,7 @@ class App:
 
         # atualiza o label de qual camera esta na tela
         self.camera_atual.config(text=f'Camera atual: {self.video_source}')
-        
+
         # TODO: carregar as preferencias da camera selecionada
 
     def salvar_preferencias(self):
@@ -273,9 +278,51 @@ class App:
                 f'VARREDURA: {self.camera_preferences[camera_index]["VARREDURA"]}\n')
             f.write(
                 f'MOVIMENTO: {self.camera_preferences[camera_index]["MOVIMENTO"]}\n')
+            f.write(
+                f'POSICAO: {self.camera_preferences[camera_index]["POSICAO"]}\n')
             f.write('\n')
 
         f.close()
+
+    def carregar_preferencias(self):
+        print('Carregando preferencias...')
+
+        f = open('preferencias.txt', 'r')
+        lines = f.readlines()
+        lines = [s.rstrip('\n') for s in lines]
+
+        numero_linhas = int(lines[0][-1])
+
+        lines = [string for string in lines if string !=
+                 '' and 'CAMERA' not in string]
+
+        # lines = lines[1:]
+
+        print('lines =', lines)
+
+        number_of_preferences_per_camera = len(self.camera_preferences[0])
+
+        print(self.camera_preferences)
+
+        print('NUMERO DE LINHAS =', numero_linhas)
+
+        # TODO: RESOLVER ISSO AQUI
+        preferences_list = list(
+            chunks(lines, number_of_preferences_per_camera))
+
+        print('preferences_list =', preferences_list)
+
+        # TODO RESOLVER O CARREGAMENTO
+        preferences_dict = dict()
+        for value in preferences_list:
+            # for value
+            print('value =', value)
+            print('value[1] =', value[1])
+            print('value[1][0] =', value[1][0])
+            print('value[1][1] =', value[1][1])
+            preferences_dict[value[1][0]] = int(value[1][1])
+
+        print(preferences_dict)
 
     def vira_para_esquerda(self):
         # TODO
@@ -309,7 +356,9 @@ class App:
 
     def atualiza_preferencias(self):
         self.camera_preferences[self.video_source] = {
-            'VARREDURA': self.varredura_is_marked.get(), 'MOVIMENTO': self.movimento_is_marked.get()}
+               # TODO: mudar esse valor
+            'VARREDURA': self.varredura_is_marked.get(), 'MOVIMENTO': self.movimento_is_marked.get(), 'POSICAO': 0
+        }
         print(f'Preferências atualizada: {self.camera_preferences}')
 
     def reset_checkboxes(self):

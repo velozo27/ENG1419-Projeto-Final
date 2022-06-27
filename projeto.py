@@ -1,17 +1,24 @@
 # Import required Libraries
+from curses import baudrate
 import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
 import time
+from serial import Serial
 
 
 #====================== SETUP =========================#
 
-global is_recording, out, camera_index, cap
+global is_recording, out, camera_index, cap1, cap2
 is_recording = False
 out = None
 camera_index = 0  # diz qual camera estamos vendo
-cap = cv2.VideoCapture(camera_index)
+# cap = cv2.VideoCapture(camera_index)
+cap1 = cv2.VideoCapture(0)
+cap2 = cv2.VideoCapture(1)
+
+# Serial
+meu_serial = Serial("COM3", baudrate=9600)
 
 # dimensoes da janela
 WIDTH = 850
@@ -54,6 +61,8 @@ def mudar_camera():
 
     print('Mudando a camera...')
 
+    # cap.release()
+
     # PARA TESTES
     ########################
     if camera_index == 0:
@@ -62,8 +71,11 @@ def mudar_camera():
         camera_index = 0
     ########################
 
+    # cap.release()
+    # cv2.destroyAllWindows()
+
     # mudando a camera
-    cap = cv2.VideoCapture(camera_index)
+    # cap = cv2.VideoCapture(camera_index)
 
     # mostrando a camera nova na tela
     show_frames()
@@ -72,12 +84,15 @@ def mudar_camera():
 def vira_para_esquerda():
     # TODO
     print('Virando para a esquerda...')
+    texto = 'esquerda' + '\n'
+    meu_serial.write(texto.encode('UTF-8'))
 
 
 def vira_para_direita():
     # TODO
-    cap.release()
     print('Virando para a direita...')
+    texto = 'direita' + '\n'
+    meu_serial.write(texto.encode('UTF-8'))
 
 
 def modo_varredura():
@@ -121,15 +136,21 @@ botao_mudar_camera.place(x=600, y=ALUTRA_BOTOES)
 
 
 def show_frames():
-    global out, is_recording, cap
+    global out, is_recording, cap1, cap2, camera_index
+
+    print('to aqui: ', camera_index)
+
+    if camera_index == 0:
+        cv2image = cv2.cvtColor(cap1.read()[1], cv2.COLOR_BGR2RGB)
+    else:
+        cv2image = cv2.cvtColor(cap2.read()[1], cv2.COLOR_BGR2RGB)
 
     # funcao que mostra o video na tela
     # eh chamada dentro dela msm atualizando o frame mostrado
 
     # Get the latest frame and convert into Image
-    cv2image = cv2.cvtColor(cap.read()[1], cv2.COLOR_BGR2RGB)
-    if is_recording:
-        out.write(cv2)
+    # if is_recording:
+    #     out.write(cv2)
 
     img = Image.fromarray(cv2image)
     # Convert image to PhotoImage
