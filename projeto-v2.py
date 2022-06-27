@@ -8,8 +8,16 @@ import datetime as dt
 import argparse
 from VideoResolutionHelper import VideoResolutionHelper
 import numpy as np
+from pymongo import MongoClient
+from bson.binary import Binary
+from os import startfile, remove, getcwd
+import matplotlib.pyplot as plt
+import io
+import gridfs
 
-
+cliente = MongoClient("localhost", 27017)
+banco = cliente['PF']
+fs = gridfs.GridFS(banco)
 
 class App:
     def __init__(self, window, window_title, video_source=0):
@@ -125,13 +133,37 @@ class App:
 
         self.window.mainloop()
 
+    #salva imagem no Banco de Dados
+    def salvar_imagem(image_path, file_name):
+        global saved
+        im = Image.open(image_path)
+        image_bytes = io.BytesIO()
+        im.save(image_bytes, format='JPEG')
+        
+        a = fs.put(image_bytes.getvalue(), filename=file_name)
+        
+    #abre imagem do banco de dados
+    def abrir_imagem(filename):
+        b = fs.put(fs.find_one({"filename": filename}))
+        out = fs.get(b)
+
+        pil_img = Image.open(io.BytesIO(out.read()))
+        fig = plt.imshow(pil_img)
+        fig.set_cmap('hot')
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+        plt.show()
+        fs.delete(b)
+        
     def snapshot(self):
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
 
         if ret:
-            cv2.imwrite("frame-"+time.strftime("%d-%m-%Y-%H-%M-%S") +
-                        ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            image_file = "frame-"+time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg"
+            cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            salvar_imagem("./"+image_file, image_file)
+            
 
     def open_camera(self):
         self.ok = True

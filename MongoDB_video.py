@@ -1,5 +1,4 @@
 from pymongo import MongoClient
-from datetime import datetime
 from PIL import Image
 from bson.binary import Binary
 from os import startfile, remove, getcwd
