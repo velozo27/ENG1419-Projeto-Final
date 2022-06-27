@@ -1,8 +1,8 @@
-from pymongo import MongoClient, ASCENDING, DESCENDING
+from pymongo import MongoClient
 from datetime import datetime
 from PIL import Image
 from bson.binary import Binary
-from os import startfile, remove
+from os import startfile, remove, getcwd
 import matplotlib.pyplot as plt
 import io
 import gridfs
@@ -35,11 +35,11 @@ def salvar_video(video_path, file_name):
     video_file = open(video_path, "rb")
     data = video_file.read()
     fs.put(data, filename=file_name)
-    #startfile(video_path)
     
-def abrir_video(download_path, filename):
+def abrir_video(filename):
     b = fs.put(fs.find_one({"filename": filename}))
     out = fs.get(b)
+    download_path = getcwd()
     output = open(download_path, "wb")
     output.write(out.read())
     output.close()
@@ -47,6 +47,6 @@ def abrir_video(download_path, filename):
     fs.delete(b)
     
 salvar_imagem("./minion.jpg", "minions")
-obter_imagem("minions")
+abrir_imagem("minions")
 salvar_video("C:\\Users\\thice\\Videos\\Captures\\aaa.mp4", "aaa")
-abrir_video("C:\\Users\\thice\\OneDrive\\Documentos\\teste.mp4", "aaa")
+abrir_video("aaa")
