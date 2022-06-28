@@ -14,6 +14,11 @@ from os import startfile, remove, getcwd
 import matplotlib.pyplot as plt
 import io
 import gridfs
+from serial import Serial
+
+meu_serial = Serial('COM6', timeout=0.01, baudrate=9600)
+texto = 'manual' + '\n'
+meu_serial.write(texto.encode('UTF-8'))
 
 cliente = MongoClient("localhost", 27017)
 banco = cliente['PF']
@@ -115,6 +120,18 @@ class App:
             window, text='Ir para direita', command=self.vira_para_direita)
         self.btn_go_left.pack(side=tk.TOP)
 
+        self.btn_go_left = tk.Button(
+            window, text='Ir para cima', command=self.vira_para_cima)
+        self.btn_go_left.pack(side=tk.TOP)
+
+        self.btn_go_left = tk.Button(
+            window, text='Ir para baixo', command=self.vira_para_baixo)
+        self.btn_go_left.pack(side=tk.TOP)
+
+        self.movement_indicator = tk.Label(
+            window, height=1, width=5, bg='grey')
+        self.movement_indicator.place(x=850, y=300)
+
         # saving camera preferences
         self.camera_preferences = [
             {'VARREDURA': 0, 'MOVIMENTO': 0, 'POSICAO': 0}] * self.number_of_cameras
@@ -186,6 +203,19 @@ class App:
         # self.selected_camera.set(self.selected_camera.get())
         # if (self.selected_camera != self.previous_selected_camera):
         #     self.change_camera(self.selected_camera)
+
+        # serial
+        texto_recebido = meu_serial.readline().decode().strip()
+        if texto_recebido != '':
+            print(texto_recebido)
+
+            if self.movimento_is_marked.get():
+                if texto_recebido == 'Movimento detectado':
+                    print('aqui')
+                    self.movement_indicator.config(bg='red')
+                
+                elif texto_recebido == 'Sem movimento':
+                    self.movement_indicator.config(bg='grey')
 
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
@@ -328,21 +358,40 @@ class App:
         # TODO
         print('Virando para a esquerda...')
         texto = 'esquerda' + '\n'
-        # meu_serial.write(texto.encode('UTF-8'))
+        meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_direita(self):
         # TODO
         print('Virando para a direita...')
         texto = 'direita' + '\n'
-        # meu_serial.write(texto.encode('UTF-8'))
+        meu_serial.write(texto.encode('UTF-8'))
+
+    def vira_para_cima(self):
+        # TODO
+        print('Virando para a cima...')
+        texto = 'cima' + '\n'
+        meu_serial.write(texto.encode('UTF-8'))
+
+    def vira_para_baixo(self):
+        # TODO
+        print('Virando para a baixo...')
+        texto = 'baixo' + '\n'
+        meu_serial.write(texto.encode('UTF-8'))
 
     def modo_varredura(self):
         # TODO
 
+        print('self.varredura_is_marked.get() =',
+              self.varredura_is_marked.get())
+
+        if self.varredura_is_marked.get():
+            texto = 'varredura' + '\n'
+        else:
+            texto = 'manual' + '\n'
+
         # manda o comando para o arduino pela Serial
-        print('Começando modo varredura...')
-        texto = 'esquerda' + '\n'
-        # meu_serial.write(texto.encode('UTF-8'))
+        print('Começando modo varredura...', texto)
+        meu_serial.write(texto.encode('UTF-8'))
 
         # salva na lista de prefrencias que foi marcado
         self.atualiza_preferencias()
@@ -356,7 +405,7 @@ class App:
 
     def atualiza_preferencias(self):
         self.camera_preferences[self.video_source] = {
-               # TODO: mudar esse valor
+            # TODO: mudar esse valor
             'VARREDURA': self.varredura_is_marked.get(), 'MOVIMENTO': self.movimento_is_marked.get(), 'POSICAO': 0
         }
         print(f'Preferências atualizada: {self.camera_preferences}')
