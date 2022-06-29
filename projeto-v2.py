@@ -6,7 +6,7 @@ import PIL.ImageTk
 import time
 import datetime as dt
 import argparse
-from VideoResolutionHelper import VideoResolutionHelper
+#from VideoResolutionHelper import VideoResolutionHelper
 import numpy as np
 from pymongo import MongoClient
 from bson.binary import Binary
@@ -200,6 +200,16 @@ class App:
             image_file = "frame-"+time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg"
             cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             self.salvar_imagem("./"+image_file, image_file)
+            
+    def snap_movement(self):
+        # Get a frame from the video source
+        ret, frame = self.vid.get_frame()
+
+        if ret:
+            image_file = "frame-"+time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg"
+            cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            self.salvar_imagem("./"+image_file, image_file)
+            self.mandar_aviso("./"+image_file)
 
     def open_camera(self):
         self.ok = True
@@ -227,6 +237,7 @@ class App:
                 if texto_recebido == 'Movimento detectado':
                     print('aqui')
                     self.movement_indicator.config(bg='red')
+                    self.snap_movement()
                 
                 elif texto_recebido == 'Sem movimento':
                     self.movement_indicator.config(bg='grey')
