@@ -37,6 +37,7 @@ def chunks(xs, n):
 
 class App:
     def __init__(self, window, window_title, video_source=0):
+        self.detected_movement = False
         self.window = window
         self.window.title(window_title)
         self.video_source = video_source  # index da camera selecionada
@@ -237,10 +238,13 @@ class App:
                 if texto_recebido == 'Movimento detectado':
                     print('aqui')
                     self.movement_indicator.config(bg='red')
-                    self.snap_movement()
+                    if (self.movement_detected == False):
+                        self.snap_movement()
+                        self.movement_detected = True
                 
                 elif texto_recebido == 'Sem movimento':
                     self.movement_indicator.config(bg='grey')
+                    self.movement_detected = False
 
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
