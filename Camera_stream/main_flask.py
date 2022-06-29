@@ -7,6 +7,8 @@ import cv2
 import gridfs
 import io
 import matplotlib.pyplot as plt
+import requests
+import codecs
 
 cliente = MongoClient("localhost", 27017)
 imagem = cliente['Im']
@@ -16,34 +18,18 @@ vid = gridfs.GridFS(video)
 
 app = Flask(__name__)
 
-all_img = []
 all_vid = []
+image_list = []
 
-global camera
-
-def gen_frames():
-    while True:
-        success, frame = camera.read()  # read the camera frame
-        if not success:
-            print("aaaaa")
-            break
-        else:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
-
-@app.route('/video_feed')
-def video_feed():
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+global cam_ind
 
 @app.route('/Camera<int:x>')
-def camera(x):
-    global camera
+def select_camera(x):
+    cam_ind = x-1
     camera = cv2.VideoCapture(x-1)
-    return render_template('cameras.html')
+    return render_template('cameras.html', cam_ind=cam_ind)
 
-@app.route('/imagem')
+#@app.route('/imagem')
 def selecionar_imagem():
     #filename = easygui.enterbox("Insira o filename da imagem:")
     for grid_out in img.find():
@@ -55,18 +41,35 @@ def selecionar_imagem():
 
 @app.route('/imagem/<string:filename>')
 def abrir_imagem(filename):
+#     b = img.put(img.find_one({"filename": filename}))
+#     out = img.get(b)
+# 
+#     pil_img = Image.open(io.BytesIO(out.read()))
+#     fig = plt.imshow(pil_img)
+#     fig.set_cmap('hot')
+#     fig.axes.get_xaxis().set_visible(False)
+#     fig.axes.get_yaxis().set_visible(False)
+#     plt.show()
+#     img.delete(b)
+#     all_img.clear()
+    image_list.clear()
     b = img.put(img.find_one({"filename": filename}))
     out = img.get(b)
-
-    pil_img = Image.open(io.BytesIO(out.read()))
-    fig = plt.imshow(pil_img)
-    fig.set_cmap('hot')
-    fig.axes.get_xaxis().set_visible(False)
-    fig.axes.get_yaxis().set_visible(False)
-    plt.show()
+    base64_data = codecs.encode(out.read(), 'base64')
+    imagem = base64_data.decode('utf-8')
     img.delete(b)
-    all_img.clear()
-    return redirect('/')
+    return render_template('imagem_grande.html', imagem=imagem)
+
+@app.route("/imagem")
+def abrir_10_imagens():
+    image_list.clear()
+    for b in img.find().sort("uploadDate", -1).limit(10):
+        if b.filename is not None:
+            base64_data = codecs.encode(b.read(), 'base64')
+            image = base64_data.decode('utf-8')
+            image_list.append([image, b.filename])
+    
+    return render_template('lista_img.html', image_list=image_list)
 
 @app.route('/video')
 def selecionar_video():
@@ -92,3 +95,6 @@ def abrir_video(filename):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+if __name__ == '__main__':
+      app.run(host='0.0.0.0', port=5000)

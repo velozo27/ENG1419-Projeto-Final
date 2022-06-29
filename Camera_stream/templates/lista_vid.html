@@ -1,0 +1,13 @@
+<body bgcolor="black" text="white" alink="aqua" link="aqua" vlink="aqua">
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8  offset-lg-2">
+        <h3 class="mt-5">Selecione o video para visualizar:</h3>
+            {% for vid in all_vid %}
+            <ul>
+                <li><a href="/video/{{ vid }}">{{ vid }}</a></li>
+            </ul>
+            {% endfor %}
+        </div>
+    </div>
+</div>
