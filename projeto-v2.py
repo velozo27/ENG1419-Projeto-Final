@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import io
 import gridfs
 from serial import Serial
+from requests import post, get
 
 meu_serial = Serial('COM6', timeout=0.01, baudrate=9600)
 texto = 'manual' + '\n'
@@ -24,6 +25,10 @@ cliente = MongoClient("localhost", 27017)
 banco = cliente['PF']
 fs = gridfs.GridFS(banco)
 
+chave = "5509315657:AAHdIY4QS0t_jIqKeBDVtOpgJf02uY3Q20k"
+id_da_conversa = "1143595271"
+base = "https://api.telegram.org/bot" + chave
+endereco = base + "/sendMessage"
 
 def chunks(xs, n):
     n = max(1, n)
@@ -177,6 +182,15 @@ class App:
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
         fs.delete(b)
+        
+    def mandar_aviso(self, path_foto):
+        endereco = base + "/sendMessage"
+        dados = {"chat_id": id_da_conversa, "text": "Movimento na camera"}
+        post(endereco, json=dados)
+        
+        endereco = base + "/sendPhoto"
+        arquivo = {"photo": open(path_foto, "rb")}
+        post(endereco, data=dados, files=arquivo)
 
     def snapshot(self):
         # Get a frame from the video source

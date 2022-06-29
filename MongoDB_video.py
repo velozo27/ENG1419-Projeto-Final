@@ -49,5 +49,5 @@ def abrir_video(filename):
     startfile(download_path)
     vid.delete(b)
     
-salvar_imagem("./campo.jpeg", "campo")
+salvar_imagem("./minion.jpg", "min")
 #salvar_video("C:\\Users\\micro1\\Downloads\\ENG1419-Projeto-Final-main\\ENG1419-Projeto-Final-main\\Camera_stream\\teste.mp4", "aaa")
