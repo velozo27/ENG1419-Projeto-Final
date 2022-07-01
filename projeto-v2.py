@@ -38,6 +38,11 @@ def chunks(xs, n):
 
 class App:
     def __init__(self, window, window_title, video_source=0):
+        self.face_detector = cv2.CascadeClassifier(
+            'Cascades/haarcascade_frontalface_default.xml')
+        self.face_id = 1
+        self.face_detector_count = 0
+
         self.detected_movement = False
         self.window = window
         self.window.title(window_title)
@@ -98,6 +103,11 @@ class App:
         self.btn_next_camera = tk.Button(
             window, text='PRÓXIMA CAMERA', command=self.next_camera)
         self.btn_next_camera.pack(side=tk.LEFT)
+
+        self.btn_face_detector = tk.Button(
+            window, text='INICIAR DETECTOR FACIAL', command=self.inicia_detector_facial)
+        self.btn_face_detector.pack(side=tk.LEFT)
+        self.btn_face_detector_apertado = False
 
         self.option_menu = tk.OptionMenu(
             window, self.selected_camera, *self.camera_options)
@@ -166,6 +176,9 @@ class App:
         self.update()
 
         self.window.mainloop()
+
+    def inicia_detector_facial(self):
+        self.btn_face_detector_apertado = True
 
     # salva imagem no Banco de Dados
     def salvar_imagem(self, image_path, file_name):
@@ -238,14 +251,7 @@ class App:
         self.timer.stop()
         print("camera closed => Not Recording")
 
-    def update(self):
-
-        # if camera was changed, update VideoCapture
-        # self.selected_camera.set(self.selected_camera.get())
-        # if (self.selected_camera != self.previous_selected_camera):
-        #     self.change_camera(self.selected_camera)
-
-        # serial
+    def handle_serial(self):
         texto_recebido = meu_serial.readline().decode().strip()
         if texto_recebido != '':
             print(texto_recebido)
@@ -268,9 +274,41 @@ class App:
                     self.movement_indicator.config(bg='grey')
                     self.movement_detected = False
 
+    def update(self):
+        # serial
+        self.handle_serial()
 
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
+
+        # **********************************
+
+        if (self.btn_face_detector_apertado):
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = self.face_detector.detectMultiScale(gray, 1.3, 5)
+
+            for (x, y, w, h) in faces:
+
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+
+                self.face_detector_count += 1
+
+                # Save the captured image into the datasets folder
+                cv2.imwrite("dataset/User." + str(self.face_id) +
+                            '.' + str(self.face_detector_count) + ".jpg", gray[y:y+h, x:x+w])
+
+                if self.face_detector_count >= 30:  # Take 30 face sample and stop video
+                    self.face_id += 1
+                    self.face_detector_count = 0
+                    self.btn_face_detector_apertado = False
+
+                    # TODO: Treinar aqui
+                    break
+
+                # cv2.imshow('image', img)
+
+        # **********************************
+
         img_rgb = frame
         if self.ok:
             self.vid.out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
