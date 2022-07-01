@@ -6,7 +6,7 @@ import PIL.ImageTk
 import time
 import datetime as dt
 import argparse
-#from VideoResolutionHelper import VideoResolutionHelper
+# from VideoResolutionHelper import VideoResolutionHelper
 import numpy as np
 from pymongo import MongoClient
 from bson.binary import Binary
@@ -30,6 +30,7 @@ id_da_conversa = "1143595271"
 base = "https://api.telegram.org/bot" + chave
 endereco = base + "/sendMessage"
 
+
 def chunks(xs, n):
     n = max(1, n)
     return (xs[i:i+n] for i in range(0, len(xs), n))
@@ -42,6 +43,10 @@ class App:
         self.window.title(window_title)
         self.video_source = video_source  # index da camera selecionada
         self.ok = False
+
+        self.esta_dia = True
+        self.msg_dia_ou_noite = tk.Label(window, text="")
+        self.msg_dia_ou_noite.place(x=10, y=200)
 
         # timer
         self.timer = ElapsedTimeClock(self.window)
@@ -183,17 +188,20 @@ class App:
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
         fs.delete(b)
-        
+
     def mandar_aviso(self, path_foto):
         endereco = base + "/sendMessage"
         dados = {"chat_id": id_da_conversa, "text": "Movimento na camera"}
         post(endereco, json=dados)
-        
+
         endereco = base + "/sendPhoto"
         arquivo = {"photo": open(path_foto, "rb")}
         post(endereco, data=dados, files=arquivo)
 
     def snapshot(self):
+        if not self.esta_dia:
+            self.msg_dia_ou_noite.config(text='NÃO É POSSÍVEL FOTOGRAFAR')
+
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
 
@@ -201,7 +209,7 @@ class App:
             image_file = "frame-"+time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg"
             cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             self.salvar_imagem("./"+image_file, image_file)
-            
+
     def snap_movement(self):
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
@@ -213,6 +221,14 @@ class App:
             self.mandar_aviso("./"+image_file)
 
     def open_camera(self):
+
+        if not self.esta_dia:
+            self.msg_dia_ou_noite.config(
+                text="NÃO É POSSÍVEL GRAVAR")
+            return
+
+        self.msg_dia_ou_noite.config(
+            text="")
         self.ok = True
         self.timer.start()
         print("camera opened => Recording")
@@ -234,6 +250,12 @@ class App:
         if texto_recebido != '':
             print(texto_recebido)
 
+            if texto_recebido == 'noite':
+                self.esta_dia = False
+
+            if texto_recebido == 'dia':
+                self.esta_dia = True
+
             if self.movimento_is_marked.get():
                 if texto_recebido == 'Movimento detectado':
                     print('aqui')
@@ -241,10 +263,11 @@ class App:
                     if (self.movement_detected == False):
                         self.snap_movement()
                         self.movement_detected = True
-                
+
                 elif texto_recebido == 'Sem movimento':
                     self.movement_indicator.config(bg='grey')
                     self.movement_detected = False
+
 
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
@@ -253,7 +276,7 @@ class App:
             self.vid.out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             pass
         if ret:
-            #img_rgb = cv2.cvtColor(src=img_rgb, code=cv2.COLOR_BGR2RGB)
+            # img_rgb = cv2.cvtColor(src=img_rgb, code=cv2.COLOR_BGR2RGB)
 
             prepared_frame = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
             prepared_frame = cv2.GaussianBlur(
