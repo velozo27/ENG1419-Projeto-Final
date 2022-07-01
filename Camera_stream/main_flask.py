@@ -13,13 +13,16 @@ import codecs
 cliente = MongoClient("localhost", 27017)
 imagem = cliente['Im']
 video = cliente['Vd']
+log_eventos = cliente['Log']
 img = gridfs.GridFS(imagem)
 vid = gridfs.GridFS(video)
+log = gridfs.GridFS(log_eventos)
 
 app = Flask(__name__)
 
 all_vid = []
 image_list = []
+log_list = []
 
 global cam_ind
 
@@ -31,27 +34,13 @@ def select_camera(x):
 
 #@app.route('/imagem')
 def selecionar_imagem():
-    #filename = easygui.enterbox("Insira o filename da imagem:")
     for grid_out in img.find():
         all_img.append(grid_out.filename)
         
-        
     return render_template('lista_img.html', all_img=all_img)    
-    #return redirect('/imagem/' + filename)
 
 @app.route('/imagem/<string:filename>')
 def abrir_imagem(filename):
-#     b = img.put(img.find_one({"filename": filename}))
-#     out = img.get(b)
-# 
-#     pil_img = Image.open(io.BytesIO(out.read()))
-#     fig = plt.imshow(pil_img)
-#     fig.set_cmap('hot')
-#     fig.axes.get_xaxis().set_visible(False)
-#     fig.axes.get_yaxis().set_visible(False)
-#     plt.show()
-#     img.delete(b)
-#     all_img.clear()
     image_list.clear()
     b = img.put(img.find_one({"filename": filename}))
     out = img.get(b)
@@ -91,6 +80,17 @@ def abrir_video(filename):
     vid.delete(b)
     all_vid.clear()
     return redirect('/')
+
+@app.route('/log')
+def exibe_log():
+    log_list.clear()
+    for b in log.find().sort("uploadDate", -1):
+        if b.filename is not None:
+            print(b.read())
+            log_list.append([b.message, b.filename])
+    
+    return render_template('lista_log.html', log_list=log_list)
+    
 
 @app.route('/')
 def index():

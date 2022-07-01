@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from PIL import Image
+from datetime import datetime
 from bson.binary import Binary
 from os import startfile, remove, getcwd
 import matplotlib.pyplot as plt
@@ -10,8 +11,10 @@ import codecs
 cliente = MongoClient("localhost", 27017)
 imagem = cliente['Im']
 video = cliente['Vd']
+log_eventos = cliente['Log']
 img = gridfs.GridFS(imagem)
 vid = gridfs.GridFS(video)
+log = gridfs.GridFS(log_eventos)
 
 def salvar_imagem(image_path, file_name):
     global saved
@@ -26,12 +29,6 @@ def abrir_imagem(filename):
     out = img.get(b)
     base64_data = codecs.encode(out.read(), 'base64')
     image = base64_data.decode('utf-8')
-    #pil_img = Image.open(io.BytesIO(out.read()))
-    #fig = plt.imshow(pil_img)
-    #fig.set_cmap('hot')
-    #fig.axes.get_xaxis().set_visible(False)
-    #fig.axes.get_yaxis().set_visible(False)
-    #plt.show()
     img.delete(b)
 
 def salvar_video(video_path, file_name):
@@ -49,5 +46,7 @@ def abrir_video(filename):
     startfile(download_path)
     vid.delete(b)
     
-salvar_imagem("./minion.jpg", "min")
-#salvar_video("C:\\Users\\micro1\\Downloads\\ENG1419-Projeto-Final-main\\ENG1419-Projeto-Final-main\\Camera_stream\\teste.mp4", "aaa")
+def salvar_evento(tipo_evento):
+    date = datetime.now()
+    str_date = date.strftime("%d/%m/%Y %H:%M")
+    log.put(b"so_pra_por_algo", filename=str_date, message=tipo_evento)
