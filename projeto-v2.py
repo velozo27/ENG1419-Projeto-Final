@@ -16,14 +16,23 @@ import io
 import gridfs
 from serial import Serial
 from requests import post, get
+import os
 
-meu_serial = Serial('COM6', timeout=0.01, baudrate=9600)
+
+# ! CAMERA 1 (USB DIREITA) SÓ 1 EIXO
+# ! CAMERA 2 (USB ESQUERDA DE CIMA) 2 EIXOS
+
+# meu_serial = Serial('COM6', timeout=0.01, baudrate=9600)
 texto = 'manual' + '\n'
-meu_serial.write(texto.encode('UTF-8'))
+# meu_serial.write(texto.encode('UTF-8'))
 
 cliente = MongoClient("localhost", 27017)
-banco = cliente['PF']
-fs = gridfs.GridFS(banco)
+image_banco = cliente['Im']
+video_banco = cliente['Vd']
+log_banco = cliente['Log']
+im = gridfs.GridFS(image_banco)
+vd = gridfs.GridFS(video_banco)
+log = gridfs.GridFS(log_banco)
 
 chave = "5509315657:AAHdIY4QS0t_jIqKeBDVtOpgJf02uY3Q20k"
 id_da_conversa = "1143595271"
@@ -38,12 +47,21 @@ def chunks(xs, n):
 
 class App:
     def __init__(self, window, window_title, video_source=0):
+        # Path for face image database
+        self.path = 'dataset'
+
+        self.nomes = ['None', 'Pedro', 'guga']
+        # Define min window size to be recognized as a face
+        self.minW = 64
+        self.minH = 48
+
+        self.recognizer = cv2.face.LBPHFaceRecognizer_create()
         self.face_detector = cv2.CascadeClassifier(
             'Cascades/haarcascade_frontalface_default.xml')
         self.face_id = 1
         self.face_detector_count = 0
 
-        self.detected_movement = False
+        self.movement_detected = False
         self.window = window
         self.window.title(window_title)
         self.video_source = video_source  # index da camera selecionada
@@ -187,12 +205,12 @@ class App:
         image_bytes = io.BytesIO()
         im.save(image_bytes, format='JPEG')
 
-        a = fs.put(image_bytes.getvalue(), filename=file_name)
+        a = im.put(image_bytes.getvalue(), filename=file_name)
 
     # abre imagem do banco de dados
     def abrir_imagem(self, filename):
-        b = fs.put(fs.find_one({"filename": filename}))
-        out = fs.get(b)
+        b = im.put(im.find_one({"filename": filename}))
+        out = im.get(b)
 
         pil_img = PIL.Image.open(io.BytesIO(out.read()))
         fig = plt.imshow(pil_img)
@@ -200,7 +218,42 @@ class App:
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
-        fs.delete(b)
+        im.delete(b)
+
+    # function to get the images and label data
+    def getImagesAndLabels(self, path):
+
+        imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
+        faceSamples = []
+        ids = []
+
+        for imagePath in imagePaths:
+
+            PIL_img = PIL.Image.open(imagePath).convert(
+                'L')  # convert it to grayscale
+            img_numpy = np.array(PIL_img, 'uint8')
+
+            id = int(os.path.split(imagePath)[-1].split(".")[1])
+            faces = self.face_detector.detectMultiScale(img_numpy)
+
+            for (x, y, w, h) in faces:
+                faceSamples.append(img_numpy[y:y+h, x:x+w])
+                ids.append(id)
+
+        return faceSamples, ids
+
+    def train_face_detector(self):
+        print("\n [INFO] Training faces. It will take a few seconds. Wait ...")
+        faces, ids = self.getImagesAndLabels(self.path)
+        self.recognizer.train(faces, np.array(ids))
+
+        # Save the model into trainer/trainer.yml
+        self.recognizer.write('trainer/trainer.yml')
+        # recognizer.save() worked on Mac, but not on Pi
+
+        # Print the numer of faces trained and end program
+        print("\n [INFO] {0} faces trained. Exiting Program".format(
+            len(np.unique(ids))))
 
     def mandar_aviso(self, path_foto):
         endereco = base + "/sendMessage"
@@ -252,7 +305,8 @@ class App:
         print("camera closed => Not Recording")
 
     def handle_serial(self):
-        texto_recebido = meu_serial.readline().decode().strip()
+        texto_recebido = ''
+        # texto_recebido = meu_serial.readline().decode().strip()
         if texto_recebido != '':
             print(texto_recebido)
 
@@ -298,14 +352,50 @@ class App:
                             '.' + str(self.face_detector_count) + ".jpg", gray[y:y+h, x:x+w])
 
                 if self.face_detector_count >= 30:  # Take 30 face sample and stop video
+
+                    self.train_face_detector()
+                    
                     self.face_id += 1
                     self.face_detector_count = 0
                     self.btn_face_detector_apertado = False
-
-                    # TODO: Treinar aqui
                     break
 
-                # cv2.imshow('image', img)
+            # TODO: rosto aqui
+            self.recognizer.read('trainer/trainer.yml')
+            faces_2 = self.face_detector.detectMultiScale(
+                gray,
+                scaleFactor=1.2,
+                minNeighbors=5,
+                minSize=(int(self.minW), int(self.minH)),
+            )
+
+            for(x, y, w, h) in faces_2:
+
+                cv2.rectangle(frame, (x, y), (x+w, y+h),
+                                (0, 255, 0), 2)
+
+                id, confidence = self.recognizer.predict(
+                    gray[y:y+h, x:x+w])
+
+                # Check if confidence is less them 100 ==> "0" is perfect match
+                if (confidence < 100):
+                    id = self.nomes[id]
+                    confidence = "  {0}%".format(
+                        round(100 - confidence))
+                else:
+                    id = "unknown"
+                    confidence = "  {0}%".format(
+                        round(100 - confidence))
+
+                font = cv2.FONT_HERSHEY_SIMPLEX
+
+                cv2.putText(frame, str(id), (x+5, y-5),
+                            font, 1, (255, 255, 255), 2)
+                cv2.putText(frame, str(confidence),
+                            (x+5, y+h-5), font, 1, (255, 255, 0), 1)
+
+
+                # cv2.imshow('image', frame)
 
         # **********************************
 
@@ -448,25 +538,25 @@ class App:
         # TODO
         print('Virando para a esquerda...')
         texto = 'esquerda' + '\n'
-        meu_serial.write(texto.encode('UTF-8'))
+        # meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_direita(self):
         # TODO
         print('Virando para a direita...')
         texto = 'direita' + '\n'
-        meu_serial.write(texto.encode('UTF-8'))
+        # meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_cima(self):
         # TODO
         print('Virando para a cima...')
         texto = 'cima' + '\n'
-        meu_serial.write(texto.encode('UTF-8'))
+        # meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_baixo(self):
         # TODO
         print('Virando para a baixo...')
         texto = 'baixo' + '\n'
-        meu_serial.write(texto.encode('UTF-8'))
+        # meu_serial.write(texto.encode('UTF-8'))
 
     def modo_varredura(self):
         # TODO
@@ -481,7 +571,7 @@ class App:
 
         # manda o comando para o arduino pela Serial
         print('Começando modo varredura...', texto)
-        meu_serial.write(texto.encode('UTF-8'))
+        # meu_serial.write(texto.encode('UTF-8'))
 
         # salva na lista de prefrencias que foi marcado
         self.atualiza_preferencias()
