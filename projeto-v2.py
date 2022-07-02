@@ -263,6 +263,9 @@ class App:
         endereco = base + "/sendPhoto"
         arquivo = {"photo": open(path_foto, "rb")}
         post(endereco, data=dados, files=arquivo)
+        
+    def salvar_evento(date, tipo_evento):
+        log.put(b"so_pra_por_algo", filename=date, message=tipo_evento)
 
     def snapshot(self):
         if not self.esta_dia:
@@ -272,7 +275,8 @@ class App:
         ret, frame = self.vid.get_frame()
 
         if ret:
-            image_file = "frame-"+time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg"
+            date = time.strftime("%d-%m-%Y-%H-%M-%S")
+            image_file = date + ".jpg"
             cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             self.salvar_imagem("./"+image_file, image_file)
 
@@ -281,10 +285,12 @@ class App:
         ret, frame = self.vid.get_frame()
 
         if ret:
-            image_file = "frame-"+time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg"
+            date = time.strftime("%d-%m-%Y-%H-%M-%S")
+            image_file = date + ".jpg"
             cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             self.salvar_imagem("./"+image_file, image_file)
             self.mandar_aviso("./"+image_file)
+            self.salvar_evento(date, "Movimento Detectado")
 
     def open_camera(self):
 
