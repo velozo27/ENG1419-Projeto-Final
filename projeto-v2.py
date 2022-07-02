@@ -219,6 +219,25 @@ class App:
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
         im.delete(b)
+    
+    #salva video no banco de dados
+    def salvar_video(video_path, file_name):
+        video_file = open(video_path, "rb")
+        data = video_file.read()
+        vid.put(data, filename=file_name)
+    
+    #abre video do banco de dados
+    def abrir_video(filename):
+        b = vid.put(vid.find_one({"filename": filename}))
+        out = vid.get(b)
+        download_path = getcwd()
+        output = open(download_path, "wb")
+        output.write(out.read())
+        output.close()
+        startfile(download_path)
+        vid.delete(b)
+
+
 
     # function to get the images and label data
     def getImagesAndLabels(self, path):
