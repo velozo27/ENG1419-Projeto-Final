@@ -1,22 +1,23 @@
 from sqlite3 import Timestamp
 import tkinter as tk
+from tkinter import simpledialog
 import cv2
 import PIL.Image
 import PIL.ImageTk
 import time
 import datetime as dt
 import argparse
-# from VideoResolutionHelper import VideoResolutionHelper
 import numpy as np
 from pymongo import MongoClient
 from bson.binary import Binary
-from os import startfile, remove, getcwd
+from os import startfile, getcwd
 import matplotlib.pyplot as plt
 import io
 import gridfs
 from serial import Serial
 from requests import post, get
 import os
+from OsHelper import *
 
 
 # ! CAMERA 1 (USB DIREITA) SÓ 1 EIXO
@@ -45,12 +46,16 @@ def chunks(xs, n):
     return (xs[i:i+n] for i in range(0, len(xs), n))
 
 
+
 class App:
     def __init__(self, window, window_title, video_source=0):
+        # comeca deletando o conteudo do diretorio 'dataset'. Fazemos isso para a deteccao facial funcionar corretamente
+        clear_dir('dataset')
+
         # Path for face image database
         self.path = 'dataset'
 
-        self.nomes = ['None', 'Pedro', 'guga']
+        self.nomes = ['None']
         # Define min window size to be recognized as a face
         self.minW = 64
         self.minH = 48
@@ -126,12 +131,11 @@ class App:
             window, text='INICIAR DETECTOR FACIAL', command=self.inicia_detector_facial)
         self.btn_face_detector.pack(side=tk.LEFT)
         self.btn_face_detector_apertado = False
-        
+
         self.btn_stop_face_detector = tk.Button(
             window, text='PARAR DETECTOR FACIAL', command=self.para_detector_facial)
         self.btn_stop_face_detector.pack(side=tk.LEFT)
         self.btn_stop_face_detector_apertado = False
-
 
         self.option_menu = tk.OptionMenu(
             window, self.selected_camera, *self.camera_options)
@@ -173,16 +177,15 @@ class App:
             window, text='Ir para baixo', command=self.vira_para_baixo)
         self.btn_go_left.pack(side=tk.TOP)
 
-        #**********MENSAGEM DE MOVIMENTO DETECTADO*********        
+        # **********MENSAGEM DE MOVIMENTO DETECTADO*********
         self.movement_indicator = tk.Label(
             window, text='Detecção de movimento:')
         self.movement_indicator.place(x=1000, y=250)
-        
+
         self.movement_indicator = tk.Label(
             window, height=1, width=5, bg='grey')
         self.movement_indicator.place(x=1050, y=300)
-        #****************************************        
-
+        # ****************************************
 
         # saving camera preferences
         self.camera_preferences = [
@@ -209,8 +212,16 @@ class App:
         self.window.mainloop()
 
     def inicia_detector_facial(self):
-        self.btn_face_detector_apertado = True
-    
+        # the input dialog
+        USER_INP = simpledialog.askstring(title="Detector facial",
+                                          prompt="Digite o seu nome abaixo:")
+        # check it out
+        print("NOME: ", USER_INP)
+
+        if USER_INP is not None or len(self.nomes) > 1:
+            self.nomes.append(USER_INP)
+            self.btn_face_detector_apertado = True
+
     def para_detector_facial(self):
         self.btn_face_detector_apertado = False
 
@@ -235,14 +246,14 @@ class App:
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
         im.delete(b)
-    
-    #salva video no banco de dados
+
+    # salva video no banco de dados
     def salvar_video(video_path, file_name):
         video_file = open(video_path, "rb")
         data = video_file.read()
         vid.put(data, filename=file_name)
-    
-    #abre video do banco de dados
+
+    # abre video do banco de dados
     def abrir_video(filename):
         b = vid.put(vid.find_one({"filename": filename}))
         out = vid.get(b)
@@ -253,9 +264,8 @@ class App:
         startfile(download_path)
         vid.delete(b)
 
-
-
     # function to get the images and label data
+
     def getImagesAndLabels(self, path):
 
         imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
@@ -298,7 +308,7 @@ class App:
         endereco = base + "/sendPhoto"
         arquivo = {"photo": open(path_foto, "rb")}
         post(endereco, data=dados, files=arquivo)
-        
+
     def salvar_evento(date, tipo_evento):
         log.put(b"so_pra_por_algo", filename=date, message=tipo_evento)
 
@@ -395,7 +405,7 @@ class App:
                 if self.face_detector_count >= 30:  # Take 30 face sample and stop video
 
                     self.train_face_detector()
-                    
+
                     self.face_id += 1
                     self.face_detector_count = 0
                     self.btn_face_detector_apertado = False
@@ -413,7 +423,7 @@ class App:
             for(x, y, w, h) in faces_2:
 
                 cv2.rectangle(frame, (x, y), (x+w, y+h),
-                                (0, 255, 0), 2)
+                              (0, 255, 0), 2)
 
                 id, confidence = self.recognizer.predict(
                     gray[y:y+h, x:x+w])
@@ -434,7 +444,6 @@ class App:
                             font, 1, (255, 255, 255), 2)
                 cv2.putText(frame, str(confidence),
                             (x+5, y+h-5), font, 1, (255, 255, 0), 1)
-
 
                 # cv2.imshow('image', frame)
 
