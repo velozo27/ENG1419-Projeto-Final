@@ -91,7 +91,7 @@ class App:
         # self.previous_selected_camera.set(
         #     self.camera_options[0])  # default value
 
-        print('self.selected_camera =', self.selected_camera)
+        print('self.selected_camera =', self.selected_camera.get())
 
         # videoResolutionHelper = VideoResolutionHelper(self.vid)
         # videoResolutionHelper.make_720p()
@@ -578,25 +578,37 @@ class App:
     def vira_para_esquerda(self):
         # TODO
         print('Virando para a esquerda...')
-        texto = 'esquerda' + '\n'
+
+        numero_camera = int(self.selected_camera.get()[-1])
+        texto = f'esquerda {numero_camera}' + '\n'
+
+        print(texto)
+
         # meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_direita(self):
         # TODO
         print('Virando para a direita...')
-        texto = 'direita' + '\n'
+
+        numero_camera = int(self.selected_camera.get()[-1])
+        texto = f'direita {numero_camera}' + '\n'
         # meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_cima(self):
         # TODO
         print('Virando para a cima...')
-        texto = 'cima' + '\n'
+
+        numero_camera = int(self.selected_camera.get()[-1])
+        texto = f'cima {numero_camera}' + '\n'
+
         # meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_baixo(self):
         # TODO
         print('Virando para a baixo...')
-        texto = 'baixo' + '\n'
+
+        numero_camera = int(self.selected_camera.get()[-1])
+        texto = f'baixo {numero_camera}' + '\n'
         # meu_serial.write(texto.encode('UTF-8'))
 
     def modo_varredura(self):
