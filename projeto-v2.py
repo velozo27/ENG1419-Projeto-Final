@@ -126,6 +126,12 @@ class App:
             window, text='INICIAR DETECTOR FACIAL', command=self.inicia_detector_facial)
         self.btn_face_detector.pack(side=tk.LEFT)
         self.btn_face_detector_apertado = False
+        
+        self.btn_stop_face_detector = tk.Button(
+            window, text='PARAR DETECTOR FACIAL', command=self.para_detector_facial)
+        self.btn_stop_face_detector.pack(side=tk.LEFT)
+        self.btn_stop_face_detector_apertado = False
+
 
         self.option_menu = tk.OptionMenu(
             window, self.selected_camera, *self.camera_options)
@@ -167,9 +173,16 @@ class App:
             window, text='Ir para baixo', command=self.vira_para_baixo)
         self.btn_go_left.pack(side=tk.TOP)
 
+        #**********MENSAGEM DE MOVIMENTO DETECTADO*********        
+        self.movement_indicator = tk.Label(
+            window, text='Detecção de movimento:')
+        self.movement_indicator.place(x=1000, y=250)
+        
         self.movement_indicator = tk.Label(
             window, height=1, width=5, bg='grey')
-        self.movement_indicator.place(x=850, y=300)
+        self.movement_indicator.place(x=1050, y=300)
+        #****************************************        
+
 
         # saving camera preferences
         self.camera_preferences = [
@@ -197,6 +210,9 @@ class App:
 
     def inicia_detector_facial(self):
         self.btn_face_detector_apertado = True
+    
+    def para_detector_facial(self):
+        self.btn_face_detector_apertado = False
 
     # salva imagem no Banco de Dados
     def salvar_imagem(self, image_path, file_name):
