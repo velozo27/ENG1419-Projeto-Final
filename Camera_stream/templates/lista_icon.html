@@ -1,0 +1,23 @@
+<style>
+.grid-container {
+  display: grid;
+  grid-template-columns: 33% 33% 33%;
+}
+</style>
+
+<body bgcolor="black" text="white" alink="aqua" link="aqua" vlink="aqua">
+<h2><a href="/">Voltar</a></h2>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8  offset-lg-2">
+        <h3 class="mt-5">Selecione a imagem para visualizar:</h3>
+        <div class="grid-container" align="center">
+            {% for img_data in icon_list %}
+                <div class="grid-item">
+                    <h4 class="mt-5">{{img_data[1]}}</h4>
+                    <a href="/video/{{img_data[1]}}"><img src = "data:image/jpg;base64, {{img_data[0]}}" alt= "{{img_data[1]}}" width="200" height="100"/></a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

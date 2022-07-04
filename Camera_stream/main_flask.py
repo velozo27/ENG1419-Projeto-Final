@@ -14,15 +14,18 @@ cliente = MongoClient("localhost", 27017)
 imagem = cliente['Im']
 video = cliente['Vd']
 log_eventos = cliente['Log']
+icon_vid = cliente['print_vid']
 img = gridfs.GridFS(imagem)
 vid = gridfs.GridFS(video)
 log = gridfs.GridFS(log_eventos)
+ico = gridfs.GridFS(icon_vid)
 
 app = Flask(__name__)
 
 all_vid = []
 image_list = []
 log_list = []
+icon_list = []
 
 global cam_ind
 
@@ -30,14 +33,7 @@ global cam_ind
 def select_camera(x):
     cam_ind = x-1
     camera = cv2.VideoCapture(x-1)
-    return render_template('cameras.html', cam_ind=cam_ind)
-
-#@app.route('/imagem')
-def selecionar_imagem():
-    for grid_out in img.find():
-        all_img.append(grid_out.filename)
-        
-    return render_template('lista_img.html', all_img=all_img)    
+    return render_template('cameras.html', cam_ind=cam_ind)  
 
 @app.route('/imagem/<string:filename>')
 def abrir_imagem(filename):
@@ -61,12 +57,15 @@ def abrir_10_imagens():
     return render_template('lista_img.html', image_list=image_list)
 
 @app.route('/video')
-def selecionar_video():
-    for grid_out in vid.find():
-        all_vid.append(grid_out.filename)
-        
-        
-    return render_template('lista_vid.html', all_vid=all_vid)
+def abrir_10_imagens():
+    icon_list.clear()
+    for b in ico.find().sort("uploadDate", -1).limit(10):
+        if b.filename is not None:
+            base64_data = codecs.encode(b.read(), 'base64')
+            icon = base64_data.decode('utf-8')
+            icon_list.append([icon, b.filename])
+    
+    return render_template('lista_icon.html', icon_list=icon_list)
 
 @app.route('/video/<string:filename>')
 def abrir_video(filename):
