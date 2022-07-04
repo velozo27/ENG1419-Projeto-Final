@@ -26,7 +26,7 @@ def salvar_imagem(image_path, file_name):
     a = img.put(image_bytes.getvalue(), filename=file_name)
     
 def salvar_icon(icon_path, file_name):
-    im = Image.open(image_path)
+    im = Image.open(icon_path)
     image_bytes = io.BytesIO()
     im.save(image_bytes, format='JPEG')
     
@@ -47,7 +47,7 @@ def salvar_video(video_path, file_name):
 def abrir_video(filename):
     b = vid.put(vid.find_one({"filename": filename}))
     out = vid.get(b)
-    download_path = getcwd()
+    download_path = getcwd() + "\\teste.mp4"
     output = open(download_path, "wb")
     output.write(out.read())
     output.close()
@@ -58,3 +58,7 @@ def salvar_evento(tipo_evento):
     date = datetime.now()
     str_date = date.strftime("%d/%m/%Y %H:%M")
     log.put(b"so_pra_por_algo", filename=str_date, message=tipo_evento)
+
+date = datetime.now()
+salvar_icon("./minion.jpg", date.strftime("%d-%m-%Y-%H-%M"))
+salvar_video("./aaa.mp4", date.strftime("%d-%m-%Y-%H-%M"))

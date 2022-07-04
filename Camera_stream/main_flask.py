@@ -57,7 +57,7 @@ def abrir_10_imagens():
     return render_template('lista_img.html', image_list=image_list)
 
 @app.route('/video')
-def abrir_10_imagens():
+def abrir_10_icons():
     icon_list.clear()
     for b in ico.find().sort("uploadDate", -1).limit(10):
         if b.filename is not None:
