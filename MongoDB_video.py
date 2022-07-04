@@ -17,7 +17,6 @@ vid = gridfs.GridFS(video)
 log = gridfs.GridFS(log_eventos)
 
 def salvar_imagem(image_path, file_name):
-    global saved
     im = Image.open(image_path)
     image_bytes = io.BytesIO()
     im.save(image_bytes, format='JPEG')

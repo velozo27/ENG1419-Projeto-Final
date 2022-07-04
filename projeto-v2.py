@@ -369,7 +369,6 @@ class App:
 
             if self.movimento_is_marked.get():
                 if texto_recebido == 'Movimento detectado':
-                    print('aqui')
                     self.movement_indicator.config(bg='red')
                     if (self.movement_detected == False):
                         self.snap_movement()
@@ -788,6 +787,8 @@ class ElapsedTimeClock:
             self.elapsedTime = dt.datetime(1, 1, 1).now()-self.zeroTime
             self.time2 = self.elapsedTime
             self.running = 0
+            date = dt.datetime.now()
+            self.salvar_video("./output.mp4", date.strftime("%d-%m-%Y-%H-%M-%S"))
 
 
 class CommandLineParser:
