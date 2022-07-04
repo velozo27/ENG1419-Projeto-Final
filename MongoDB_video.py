@@ -12,9 +12,11 @@ cliente = MongoClient("localhost", 27017)
 imagem = cliente['Im']
 video = cliente['Vd']
 log_eventos = cliente['Log']
+icon_vid = cliente['print_vid']
 img = gridfs.GridFS(imagem)
 vid = gridfs.GridFS(video)
 log = gridfs.GridFS(log_eventos)
+ico = gridfs.GridFS(icon_vid)
 
 def salvar_imagem(image_path, file_name):
     im = Image.open(image_path)
@@ -22,6 +24,13 @@ def salvar_imagem(image_path, file_name):
     im.save(image_bytes, format='JPEG')
     
     a = img.put(image_bytes.getvalue(), filename=file_name)
+    
+def salvar_icon(icon_path, file_name):
+    im = Image.open(image_path)
+    image_bytes = io.BytesIO()
+    im.save(image_bytes, format='JPEG')
+    
+    a = ico.put(image_bytes.getvalue(), filename=file_name)
     
 def abrir_imagem(filename):
     b = img.put(img.find_one({"filename": filename}))
