@@ -29,6 +29,8 @@ icon_list = []
 
 global cam_ind
 
+
+
 @app.route('/Camera<int:x>')
 def select_camera(x):
     cam_ind = x-1

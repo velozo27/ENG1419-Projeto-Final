@@ -56,9 +56,8 @@ def abrir_video(filename):
     
 def salvar_evento(tipo_evento):
     date = datetime.now()
-    str_date = date.strftime("%d/%m/%Y %H:%M")
+    str_date = date.strftime("%d-%m-%Y-%H-%M")
     log.put(b"so_pra_por_algo", filename=str_date, message=tipo_evento)
 
 date = datetime.now()
-salvar_icon("./minion.jpg", date.strftime("%d-%m-%Y-%H-%M"))
-salvar_video("./aaa.mp4", date.strftime("%d-%m-%Y-%H-%M"))
+salvar_imagem("./img5.jpg", date.strftime("%d-%m-%Y-%H-%M"))

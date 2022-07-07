@@ -31,9 +31,11 @@ cliente = MongoClient("localhost", 27017)
 image_banco = cliente['Im']
 video_banco = cliente['Vd']
 log_banco = cliente['Log']
-im = gridfs.GridFS(image_banco)
-vd = gridfs.GridFS(video_banco)
+icon_vid = cliente['print_vid']
+img = gridfs.GridFS(image_banco)
+vid = gridfs.GridFS(video_banco)
 log = gridfs.GridFS(log_banco)
+ico = gridfs.GridFS(icon_vid)
 
 chave = "5509315657:AAHdIY4QS0t_jIqKeBDVtOpgJf02uY3Q20k"
 id_da_conversa = "1143595271"
@@ -232,12 +234,12 @@ class App:
         image_bytes = io.BytesIO()
         im.save(image_bytes, format='JPEG')
 
-        a = im.put(image_bytes.getvalue(), filename=file_name)
+        a = img.put(image_bytes.getvalue(), filename=file_name)
 
     # abre imagem do banco de dados
     def abrir_imagem(self, filename):
-        b = im.put(im.find_one({"filename": filename}))
-        out = im.get(b)
+        b = img.put(im.find_one({"filename": filename}))
+        out = img.get(b)
 
         pil_img = PIL.Image.open(io.BytesIO(out.read()))
         fig = plt.imshow(pil_img)
