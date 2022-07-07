@@ -37,22 +37,27 @@ vid = gridfs.GridFS(video_banco)
 log = gridfs.GridFS(log_banco)
 ico = gridfs.GridFS(icon_vid)
 
-chave = "5509315657:AAHdIY4QS0t_jIqKeBDVtOpgJf02uY3Q20k"
-id_da_conversa = "1143595271"
+chave = "5218815986:AAGZcuIwh1ljkj89t55jpPUVaFkgc1QfFc4"
+id_da_conversa = "5342961273"
 base = "https://api.telegram.org/bot" + chave
 endereco = base + "/sendMessage"
 
+# parâmetros iniciais do Telegram
+# chave = "5165945709:AAGIFRMtq_we11JV7TK8yYvNWz330CEy3X0"
+# id_da_conversa = "739063101"
+# endereco_base = "https://api.telegram.org/bot" + chave
 
 def chunks(xs, n):
     n = max(1, n)
     return (xs[i:i+n] for i in range(0, len(xs), n))
 
 
-
 class App:
     def __init__(self, window, window_title, video_source=0):
         # comeca deletando o conteudo do diretorio 'dataset'. Fazemos isso para a deteccao facial funcionar corretamente
         clear_dir('dataset')
+
+        self.flag = False
 
         # Path for face image database
         self.path = 'dataset'
@@ -207,6 +212,8 @@ class App:
             window, text='Detecção de Movimento', variable=self.movimento_is_marked, onvalue=1, offvalue=0, command=self.modo_movimento)
         self.box_movimento.pack(side=tk.BOTTOM)
 
+        self.numero_camera = 0
+
         # After it is called once, the update method will be automatically called every delay milliseconds
         self.delay = 10
         self.update()
@@ -226,6 +233,7 @@ class App:
 
     def para_detector_facial(self):
         self.btn_face_detector_apertado = False
+        self.flag = False
 
     # salva imagem no Banco de Dados
     def salvar_imagem(self, image_path, file_name):
@@ -238,7 +246,7 @@ class App:
 
     # abre imagem do banco de dados
     def abrir_imagem(self, filename):
-        b = img.put(im.find_one({"filename": filename}))
+        b = img.put(img.find_one({"filename": filename}))
         out = img.get(b)
 
         pil_img = PIL.Image.open(io.BytesIO(out.read()))
@@ -247,7 +255,7 @@ class App:
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
-        im.delete(b)
+        img.delete(b)
 
     # salva video no banco de dados
     def salvar_video(video_path, file_name):
@@ -267,7 +275,7 @@ class App:
         vid.delete(b)
         
     def salvar_icon(icon_path, file_name):
-        im = Image.open(icon_path)
+        im = PIL.Image.open(icon_path)
         image_bytes = io.BytesIO()
         im.save(image_bytes, format='JPEG')
         
@@ -318,7 +326,7 @@ class App:
         arquivo = {"photo": open(path_foto, "rb")}
         post(endereco, data=dados, files=arquivo)
 
-    def salvar_evento(date, tipo_evento):
+    def salvar_evento(self, date, tipo_evento):
         log.put(b"so_pra_por_algo", filename=date, message=tipo_evento)
 
     def snapshot(self):
@@ -354,7 +362,8 @@ class App:
             date = date.strftime("%d-%m-%Y-%H-%M-%S")
             image_file = date + ".jpg"
             cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-            self.salvar_icon("./"+image_file, image_file)
+            # self.salvar_icon("./"+image_file, image_file)
+            self.timer.salvar_icon("./"+image_file, image_file)
 
     def open_camera(self):
 
@@ -398,16 +407,27 @@ class App:
                     self.movement_detected = False
 
     def update(self):
+        # flag = False
+
         # serial
         self.handle_serial()
 
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
 
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # self.recognizer.read('trainer/trainer.yml')
+        # faces_2 = self.face_detector.detectMultiScale(
+        #     gray,
+        #     scaleFactor=1.2,
+        #     minNeighbors=5,
+        #     minSize=(int(self.minW), int(self.minH)),
+        # )
+
         # **********************************
 
         if (self.btn_face_detector_apertado):
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = self.face_detector.detectMultiScale(gray, 1.3, 5)
 
             for (x, y, w, h) in faces:
@@ -421,49 +441,27 @@ class App:
                             '.' + str(self.face_detector_count) + ".jpg", gray[y:y+h, x:x+w])
 
                 if self.face_detector_count >= 30:  # Take 30 face sample and stop video
-
-                    self.train_face_detector()
-
                     self.face_id += 1
                     self.face_detector_count = 0
                     self.btn_face_detector_apertado = False
-                    break
 
-            # TODO: rosto aqui
-            self.recognizer.read('trainer/trainer.yml')
-            faces_2 = self.face_detector.detectMultiScale(
-                gray,
-                scaleFactor=1.2,
-                minNeighbors=5,
-                minSize=(int(self.minW), int(self.minH)),
-            )
+                    self.train_face_detector()
 
-            for(x, y, w, h) in faces_2:
+                    self.flag = True
 
-                cv2.rectangle(frame, (x, y), (x+w, y+h),
-                              (0, 255, 0), 2)
+                    # TODO: rosto aqui
+                    # self.recognizer.read('trainer/trainer.yml')
+                    # faces_2 = self.face_detector.detectMultiScale(
+                    #     gray,
+                    #     scaleFactor=1.2,
+                    #     minNeighbors=5,
+                    #     minSize=(int(self.minW), int(self.minH)),
+                    # )
+                    # self.destaca_rosto(gray, frame)
 
-                id, confidence = self.recognizer.predict(
-                    gray[y:y+h, x:x+w])
+                    # cv2.imshow('image', frame)
 
-                # Check if confidence is less them 100 ==> "0" is perfect match
-                if (confidence < 100):
-                    id = self.nomes[id]
-                    confidence = "  {0}%".format(
-                        round(100 - confidence))
-                else:
-                    id = "unknown"
-                    confidence = "  {0}%".format(
-                        round(100 - confidence))
-
-                font = cv2.FONT_HERSHEY_SIMPLEX
-
-                cv2.putText(frame, str(id), (x+5, y-5),
-                            font, 1, (255, 255, 255), 2)
-                cv2.putText(frame, str(confidence),
-                            (x+5, y+h-5), font, 1, (255, 255, 0), 1)
-
-                # cv2.imshow('image', frame)
+                    # break
 
         # **********************************
 
@@ -506,6 +504,46 @@ class App:
                     cv2.rectangle(img=img_rgb, pt1=(x, y), pt2=(
                         x + w, y + h), color=(0, 255, 0), thickness=2)
 
+            if self.flag:
+                # self.recognizer.read('trainer/trainer.yml')
+                faces_2 = self.face_detector.detectMultiScale(
+                    gray,
+                    scaleFactor=1.2,
+                    minNeighbors=5,
+                    minSize=(int(self.minW), int(self.minH)),
+                )
+                
+                print('faces_2 =', faces_2)
+                print('len(faces_2) =', len(faces_2))
+
+                for(x, y, w, h) in faces_2:
+
+                    cv2.rectangle(img_rgb, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+                    id, confidence = self.recognizer.predict(
+                        gray[y:y+h, x:x+w])
+
+                    # Check if confidence is less them 100 ==> "0" is perfect match
+                    print('id =', id)
+                    print('self.nomes =', self.nomes)
+
+                    if (confidence < 100):
+                        id = self.nomes[id]
+                        confidence = "  {0}%".format(
+                            round(100 - confidence))
+                    else:
+                        id = "unknown"
+                        confidence = "  {0}%".format(
+                            round(100 - confidence))
+
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+
+                    cv2.putText(img_rgb, str(id), (x+5, y-5),
+                                font, 1, (255, 255, 255), 2)
+                    cv2.putText(img_rgb, str(confidence),
+                                (x+5, y+h-5), font, 1, (255, 255, 0), 1)
+
+
             self.photo = PIL.ImageTk.PhotoImage(
                 image=PIL.Image.fromarray(img_rgb))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
@@ -517,8 +555,10 @@ class App:
                     #   new_video_source
                     ):
         if self.video_source + 1 == self.number_of_cameras:
+            self.numero_camera = 0
             self.video_source = 0
         else:
+            self.numero_camera += 1
             self.video_source += 1
 
         self.vid = VideoCapture(self.video_source)
@@ -606,8 +646,8 @@ class App:
         # TODO
         print('Virando para a esquerda...')
 
-        numero_camera = int(self.selected_camera.get()[-1])
-        texto = f'esquerda {numero_camera}' + '\n'
+        self.numero_camera = int(self.selected_camera.get()[-1])
+        texto = f'esquerda {self.numero_camera}' + '\n'
 
         print(texto)
 
@@ -617,16 +657,17 @@ class App:
         # TODO
         print('Virando para a direita...')
 
-        numero_camera = int(self.selected_camera.get()[-1])
-        texto = f'direita {numero_camera}' + '\n'
+        self.numero_camera = int(self.selected_camera.get()[-1])
+        texto = f'direita {self.numero_camera}' + '\n'
         # meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_cima(self):
         # TODO
         print('Virando para a cima...')
 
-        numero_camera = int(self.selected_camera.get()[-1])
-        texto = f'cima {numero_camera}' + '\n'
+        self.numero_camera = int(self.selected_camera.get()[-1])
+        texto = f'cima {self.numero_camera}' + '\n'
+        print(texto)
 
         # meu_serial.write(texto.encode('UTF-8'))
 
@@ -634,8 +675,10 @@ class App:
         # TODO
         print('Virando para a baixo...')
 
-        numero_camera = int(self.selected_camera.get()[-1])
-        texto = f'baixo {numero_camera}' + '\n'
+        self.numero_camera = int(self.selected_camera.get()[-1])
+        texto = f'baixo {self.numero_camera}' + '\n'
+        print(texto)
+
         # meu_serial.write(texto.encode('UTF-8'))
 
     def modo_varredura(self):
