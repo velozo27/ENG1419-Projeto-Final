@@ -265,6 +265,13 @@ class App:
         output.close()
         startfile(download_path)
         vid.delete(b)
+        
+    def salvar_icon(icon_path, file_name):
+        im = Image.open(icon_path)
+        image_bytes = io.BytesIO()
+        im.save(image_bytes, format='JPEG')
+        
+        a = ico.put(image_bytes.getvalue(), filename=file_name)
 
     # function to get the images and label data
 
@@ -338,6 +345,16 @@ class App:
             self.salvar_imagem("./"+image_file, image_file)
             self.mandar_aviso("./"+image_file)
             self.salvar_evento(date, "Movimento Detectado")
+    
+    def snap_icon(self, date):
+        # Get a frame from the video source
+        ret, frame = self.vid.get_frame()
+
+        if ret:
+            date = date.strftime("%d-%m-%Y-%H-%M-%S")
+            image_file = date + ".jpg"
+            cv2.imwrite(image_file, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            self.salvar_icon("./"+image_file, image_file)
 
     def open_camera(self):
 
@@ -790,6 +807,7 @@ class ElapsedTimeClock:
             self.time2 = self.elapsedTime
             self.running = 0
             date = dt.datetime.now()
+            self.snap_icon(date)
             self.salvar_video("./output.mp4", date.strftime("%d-%m-%Y-%H-%M-%S"))
 
 
