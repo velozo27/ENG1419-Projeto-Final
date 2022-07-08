@@ -4,10 +4,10 @@ Projeto final da disciplina ENG1419 - Programação de microcontralodores na PUC
 
 ## Integrantes:
 
-> François Ludwinski - 2211453
-> Gustavo Rodrigues - 1811619
-> Pedro Antônio Tibau Velozo - 1812013
-> Thiago Cerqueira - 1910872
+François Ludwinski - 2211453 <br>
+Gustavo Rodrigues - 1811619 <br>
+Pedro Antônio Tibau Velozo - 1812013 <br>
+Thiago Cerqueira - 1910872 <br>
 
 ## Instruções para rodar o projeto
 
