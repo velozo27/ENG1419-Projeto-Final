@@ -37,8 +37,8 @@ vid = gridfs.GridFS(video_banco)
 log = gridfs.GridFS(log_banco)
 ico = gridfs.GridFS(icon_vid)
 
-chave = "5218815986:AAGZcuIwh1ljkj89t55jpPUVaFkgc1QfFc4"
-id_da_conversa = "5342961273"
+chave = "INSERIR CHAVE AQUI"
+id_da_conversa = "INSERIR ID DA CONVERSA AQUI"
 base = "https://api.telegram.org/bot" + chave
 endereco = base + "/sendMessage"
 
