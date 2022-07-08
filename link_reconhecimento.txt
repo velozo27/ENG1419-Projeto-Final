@@ -1,2 +1,0 @@
-link reconhecimento:
-https://towardsdatascience.com/real-time-face-recognition-an-end-to-end-project-b738bb0f7348

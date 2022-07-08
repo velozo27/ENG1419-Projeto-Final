@@ -23,9 +23,9 @@ from OsHelper import *
 # ! CAMERA 1 (USB DIREITA) SÓ 1 EIXO
 # ! CAMERA 2 (USB ESQUERDA DE CIMA) 2 EIXOS
 
-# meu_serial = Serial('COM6', timeout=0.01, baudrate=9600)
+meu_serial = Serial('COM6', timeout=0.01, baudrate=9600)
 texto = 'manual' + '\n'
-# meu_serial.write(texto.encode('UTF-8'))
+meu_serial.write(texto.encode('UTF-8'))
 
 cliente = MongoClient("localhost", 27017)
 image_banco = cliente['Im']
@@ -330,6 +330,8 @@ class App:
         log.put(b"so_pra_por_algo", filename=date, message=tipo_evento)
 
     def snapshot(self):
+        print('tirando foto')
+
         if not self.esta_dia:
             self.msg_dia_ou_noite.config(text='NÃO É POSSÍVEL FOTOGRAFAR')
 
@@ -385,7 +387,7 @@ class App:
 
     def handle_serial(self):
         texto_recebido = ''
-        # texto_recebido = meu_serial.readline().decode().strip()
+        texto_recebido = meu_serial.readline().decode().strip()
         if texto_recebido != '':
             print(texto_recebido)
 
@@ -568,9 +570,6 @@ class App:
         # atualiza o label de qual camera esta na tela
         self.camera_atual.config(text=f'Camera atual: {self.video_source}')
 
-        # self.videoResolutionHelper.change_capture(self.video_source)
-        # self.videoResolutionHelper.make_720p()
-
         # self.vid = VideoCapture(new_video_source)
 
     def change_to_selected_camera(self):
@@ -643,7 +642,6 @@ class App:
         print(preferences_dict)
 
     def vira_para_esquerda(self):
-        # TODO
         print('Virando para a esquerda...')
 
         self.numero_camera = int(self.selected_camera.get()[-1])
@@ -651,38 +649,34 @@ class App:
 
         print(texto)
 
-        # meu_serial.write(texto.encode('UTF-8'))
+        meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_direita(self):
-        # TODO
         print('Virando para a direita...')
 
         self.numero_camera = int(self.selected_camera.get()[-1])
         texto = f'direita {self.numero_camera}' + '\n'
-        # meu_serial.write(texto.encode('UTF-8'))
+        meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_cima(self):
-        # TODO
         print('Virando para a cima...')
 
         self.numero_camera = int(self.selected_camera.get()[-1])
         texto = f'cima {self.numero_camera}' + '\n'
         print(texto)
 
-        # meu_serial.write(texto.encode('UTF-8'))
+        meu_serial.write(texto.encode('UTF-8'))
 
     def vira_para_baixo(self):
-        # TODO
         print('Virando para a baixo...')
 
         self.numero_camera = int(self.selected_camera.get()[-1])
         texto = f'baixo {self.numero_camera}' + '\n'
         print(texto)
 
-        # meu_serial.write(texto.encode('UTF-8'))
+        meu_serial.write(texto.encode('UTF-8'))
 
     def modo_varredura(self):
-        # TODO
 
         print('self.varredura_is_marked.get() =',
               self.varredura_is_marked.get())
@@ -694,13 +688,12 @@ class App:
 
         # manda o comando para o arduino pela Serial
         print('Começando modo varredura...', texto)
-        # meu_serial.write(texto.encode('UTF-8'))
+        meu_serial.write(texto.encode('UTF-8'))
 
         # salva na lista de prefrencias que foi marcado
         self.atualiza_preferencias()
 
     def modo_movimento(self):
-        # TODO
         print('Começando modo movimento')
 
         # salva na lista de prefrencias que foi marcado
